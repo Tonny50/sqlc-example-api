@@ -1,0 +1,1 @@
+ALTER TABLE thread DROP COLUMN meassage;

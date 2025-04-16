@@ -10,23 +10,23 @@ import (
 )
 
 const createMessage = `-- name: CreateMessage :one
-INSERT INTO message (thread, sender, content)
+INSERT INTO message (thread_id, sender, content)
 VALUES ($1, $2, $3)
-RETURNING id, thread, sender, content, created_at
+RETURNING id, thread_id, sender, content, created_at
 `
 
 type CreateMessageParams struct {
-	Thread  string `json:"thread"`
-	Sender  string `json:"sender"`
-	Content string `json:"content"`
+	ThreadID string `json:"thread_id"`
+	Sender   string `json:"sender"`
+	Content  string `json:"content"`
 }
 
 func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error) {
-	row := q.db.QueryRow(ctx, createMessage, arg.Thread, arg.Sender, arg.Content)
+	row := q.db.QueryRow(ctx, createMessage, arg.ThreadID, arg.Sender, arg.Content)
 	var i Message
 	err := row.Scan(
 		&i.ID,
-		&i.Thread,
+		&i.ThreadID,
 		&i.Sender,
 		&i.Content,
 		&i.CreatedAt,
@@ -34,8 +34,36 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 	return i, err
 }
 
+const createThread = `-- name: CreateThread :one
+INSERT INTO thread (topic)
+VALUES ($1)
+RETURNING id, topic, created_at, updated_at
+`
+
+func (q *Queries) CreateThread(ctx context.Context, topic string) (Thread, error) {
+	row := q.db.QueryRow(ctx, createThread, topic)
+	var i Thread
+	err := row.Scan(
+		&i.ID,
+		&i.Topic,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteMeageByID = `-- name: DeleteMeageByID :exec
+DELETE FROM message
+WHERE id = $1
+`
+
+func (q *Queries) DeleteMeageByID(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteMeageByID, id)
+	return err
+}
+
 const getMessageByID = `-- name: GetMessageByID :one
-SELECT id, thread, sender, content, created_at FROM message
+SELECT id, thread_id, sender, content, created_at FROM message
 WHERE id = $1
 `
 
@@ -44,7 +72,7 @@ func (q *Queries) GetMessageByID(ctx context.Context, id string) (Message, error
 	var i Message
 	err := row.Scan(
 		&i.ID,
-		&i.Thread,
+		&i.ThreadID,
 		&i.Sender,
 		&i.Content,
 		&i.CreatedAt,
@@ -53,13 +81,13 @@ func (q *Queries) GetMessageByID(ctx context.Context, id string) (Message, error
 }
 
 const getMessagesByThread = `-- name: GetMessagesByThread :many
-SELECT id, thread, sender, content, created_at FROM message
-WHERE thread = $1
+SELECT id, thread_id, sender, content, created_at FROM message
+WHERE thread_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetMessagesByThread(ctx context.Context, thread string) ([]Message, error) {
-	rows, err := q.db.Query(ctx, getMessagesByThread, thread)
+func (q *Queries) GetMessagesByThread(ctx context.Context, threadID string) ([]Message, error) {
+	rows, err := q.db.Query(ctx, getMessagesByThread, threadID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +97,7 @@ func (q *Queries) GetMessagesByThread(ctx context.Context, thread string) ([]Mes
 		var i Message
 		if err := rows.Scan(
 			&i.ID,
-			&i.Thread,
+			&i.ThreadID,
 			&i.Sender,
 			&i.Content,
 			&i.CreatedAt,
@@ -82,4 +110,30 @@ func (q *Queries) GetMessagesByThread(ctx context.Context, thread string) ([]Mes
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateMesageByID = `-- name: UpdateMesageByID :one
+UPDATE message
+SET sender=$2, content=$3
+WHERE id = $1
+RETURNING id, thread_id, sender, content, created_at
+`
+
+type UpdateMesageByIDParams struct {
+	ID      string `json:"id"`
+	Sender  string `json:"sender"`
+	Content string `json:"content"`
+}
+
+func (q *Queries) UpdateMesageByID(ctx context.Context, arg UpdateMesageByIDParams) (Message, error) {
+	row := q.db.QueryRow(ctx, updateMesageByID, arg.ID, arg.Sender, arg.Content)
+	var i Message
+	err := row.Scan(
+		&i.ID,
+		&i.ThreadID,
+		&i.Sender,
+		&i.Content,
+		&i.CreatedAt,
+	)
+	return i, err
 }
