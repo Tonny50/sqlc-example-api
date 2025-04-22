@@ -23,6 +23,12 @@ VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: CreateOrder :one
-INSERT INTO "order" (customer_id, product_name, price, tran_status)
+INSERT INTO "order" (customer_id, product_name, price, order_status)
 VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: UpadateOrderById :one
+UPDATE "order"
+SET order_status = $2
+WHERE id =$1
 RETURNING *;

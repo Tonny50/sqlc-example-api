@@ -26,6 +26,7 @@ type Querier interface {
 	// RETURNING *;
 	CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
+	UpadateOrderById(ctx context.Context, arg UpadateOrderByIdParams) (Order, error)
 }
 
 var _ Querier = (*Queries)(nil)

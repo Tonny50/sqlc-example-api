@@ -69,7 +69,7 @@ func (h *MessageHandler) handleCreateOrders(c *gin.Context) {
 	}
 
 	num := "673501707"
-	amount := order.Price
+	amount := "500"
 	des := "order"
 	ref := GenerateRandomLetters(10)
 
@@ -77,7 +77,7 @@ func (h *MessageHandler) handleCreateOrders(c *gin.Context) {
 
 	reqpay := campay.Payment(apik, num, amount, des, ref)
 
-	time.Sleep(20 * time.Second)
+	//time.Sleep(20 * time.Second)
 
 	state := campay.Status(apik, reqpay.Reference)
 

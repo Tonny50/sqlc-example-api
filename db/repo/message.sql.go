@@ -11,6 +11,9 @@ import (
 
 const createCustomer = `-- name: CreateCustomer :one
 
+
+
+
 INSERT INTO customer (customer_name, phone_number, email)
 VALUES ($1, $2, $3)
 RETURNING id, customer_name, phone_number, email, created_at
@@ -22,7 +25,21 @@ type CreateCustomerParams struct {
 	Email        string `json:"email"`
 }
 
-
+// -- name: CreateMessage :one
+// INSERT INTO message (thread, sender, content)
+// VALUES ($1, $2, $3)
+// RETURNING *;
+// -- name: GetMessageByID :one
+// SELECT * FROM message
+// WHERE id = $1;
+// -- name: GetMessagesByThread :many
+// SELECT * FROM message
+// WHERE thread = $1
+// ORDER BY created_at DESC;
+// -- name: CustomerOrders :many
+// INSERT INTO orders (reference, phone_number, amount, transaction_status, transaction_description)
+// VALUES ($1, $2, $3, $4, $5)
+// RETURNING *;
 func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error) {
 	row := q.db.QueryRow(ctx, createCustomer, arg.CustomerName, arg.PhoneNumber, arg.Email)
 	var i Customer
@@ -37,25 +54,58 @@ func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) 
 }
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO "order" (customer_id, product_name, price)
-VALUES ($1, $2, $3)
-RETURNING  customer_id, product_name, price, order_date
+INSERT INTO "order" (customer_id, product_name, price, order_status)
+VALUES ($1, $2, $3, $4)
+RETURNING id, customer_id, product_name, price, order_status, order_date
 `
 
 type CreateOrderParams struct {
 	CustomerID  string `json:"customer_id"`
 	ProductName string `json:"product_name"`
 	Price       string `json:"price"`
+	OrderStatus string `json:"order_status"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
-	row := q.db.QueryRow(ctx, createOrder, arg.CustomerID, arg.ProductName, arg.Price)
+	row := q.db.QueryRow(ctx, createOrder,
+		arg.CustomerID,
+		arg.ProductName,
+		arg.Price,
+		arg.OrderStatus,
+	)
 	var i Order
 	err := row.Scan(
 		&i.ID,
 		&i.CustomerID,
 		&i.ProductName,
 		&i.Price,
+		&i.OrderStatus,
+		&i.OrderDate,
+	)
+	return i, err
+}
+
+const upadateOrderById = `-- name: UpadateOrderById :one
+UPDATE "order"
+SET order_status = $2
+WHERE id =$1
+RETURNING id, customer_id, product_name, price, order_status, order_date
+`
+
+type UpadateOrderByIdParams struct {
+	ID          string `json:"id"`
+	OrderStatus string `json:"order_status"`
+}
+
+func (q *Queries) UpadateOrderById(ctx context.Context, arg UpadateOrderByIdParams) (Order, error) {
+	row := q.db.QueryRow(ctx, upadateOrderById, arg.ID, arg.OrderStatus)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerID,
+		&i.ProductName,
+		&i.Price,
+		&i.OrderStatus,
 		&i.OrderDate,
 	)
 	return i, err

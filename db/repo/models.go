@@ -21,5 +21,6 @@ type Order struct {
 	CustomerID  string           `json:"customer_id"`
 	ProductName string           `json:"product_name"`
 	Price       string           `json:"price"`
+	OrderStatus string           `json:"order_status"`
 	OrderDate   pgtype.Timestamp `json:"order_date"`
 }
