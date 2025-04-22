@@ -9,77 +9,54 @@ import (
 	"context"
 )
 
-const createMessage = `-- name: CreateMessage :one
-INSERT INTO message (thread, sender, content)
+const createCustomer = `-- name: CreateCustomer :one
+
+INSERT INTO customer (customer_name, phone_number, email)
 VALUES ($1, $2, $3)
-RETURNING id, thread, sender, content, created_at
+RETURNING id, customer_name, phone_number, email, created_at
 `
 
-type CreateMessageParams struct {
-	Thread  string `json:"thread"`
-	Sender  string `json:"sender"`
-	Content string `json:"content"`
+type CreateCustomerParams struct {
+	CustomerName string `json:"customer_name"`
+	PhoneNumber  string `json:"phone_number"`
+	Email        string `json:"email"`
 }
 
-func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error) {
-	row := q.db.QueryRow(ctx, createMessage, arg.Thread, arg.Sender, arg.Content)
-	var i Message
+
+func (q *Queries) CreateCustomer(ctx context.Context, arg CreateCustomerParams) (Customer, error) {
+	row := q.db.QueryRow(ctx, createCustomer, arg.CustomerName, arg.PhoneNumber, arg.Email)
+	var i Customer
 	err := row.Scan(
 		&i.ID,
-		&i.Thread,
-		&i.Sender,
-		&i.Content,
+		&i.CustomerName,
+		&i.PhoneNumber,
+		&i.Email,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
-const getMessageByID = `-- name: GetMessageByID :one
-SELECT id, thread, sender, content, created_at FROM message
-WHERE id = $1
+const createOrder = `-- name: CreateOrder :one
+INSERT INTO "order" (customer_id, product_name, price)
+VALUES ($1, $2, $3)
+RETURNING  customer_id, product_name, price, order_date
 `
 
-func (q *Queries) GetMessageByID(ctx context.Context, id string) (Message, error) {
-	row := q.db.QueryRow(ctx, getMessageByID, id)
-	var i Message
-	err := row.Scan(
-		&i.ID,
-		&i.Thread,
-		&i.Sender,
-		&i.Content,
-		&i.CreatedAt,
-	)
-	return i, err
+type CreateOrderParams struct {
+	CustomerID  string `json:"customer_id"`
+	ProductName string `json:"product_name"`
+	Price       string `json:"price"`
 }
 
-const getMessagesByThread = `-- name: GetMessagesByThread :many
-SELECT id, thread, sender, content, created_at FROM message
-WHERE thread = $1
-ORDER BY created_at DESC
-`
-
-func (q *Queries) GetMessagesByThread(ctx context.Context, thread string) ([]Message, error) {
-	rows, err := q.db.Query(ctx, getMessagesByThread, thread)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []Message{}
-	for rows.Next() {
-		var i Message
-		if err := rows.Scan(
-			&i.ID,
-			&i.Thread,
-			&i.Sender,
-			&i.Content,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
+	row := q.db.QueryRow(ctx, createOrder, arg.CustomerID, arg.ProductName, arg.Price)
+	var i Order
+	err := row.Scan(
+		&i.ID,
+		&i.CustomerID,
+		&i.ProductName,
+		&i.Price,
+		&i.OrderDate,
+	)
+	return i, err
 }
