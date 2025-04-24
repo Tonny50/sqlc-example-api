@@ -37,7 +37,7 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 const createThread = `-- name: CreateThread :one
 INSERT INTO thread (topic)
 VALUES ($1)
-RETURNING id, topic, created_at, updated_at
+RETURNING id, topic, message, created_at, updated_at
 `
 
 func (q *Queries) CreateThread(ctx context.Context, topic string) (Thread, error) {
@@ -46,6 +46,7 @@ func (q *Queries) CreateThread(ctx context.Context, topic string) (Thread, error
 	err := row.Scan(
 		&i.ID,
 		&i.Topic,
+		&i.Message,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -110,6 +111,57 @@ func (q *Queries) GetMessagesByThread(ctx context.Context, threadID string) ([]M
 		return nil, err
 	}
 	return items, nil
+}
+
+const getMessagesByThreadPaginated = `-- name: GetMessagesByThreadPaginated :many
+SELECT id, thread_id, sender, content, created_at FROM message
+WHERE thread_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetMessagesByThreadPaginatedParams struct {
+	ThreadID string `json:"thread_id"`
+	Limit    int32  `json:"limit"`
+	Offset   int32  `json:"offset"`
+}
+
+func (q *Queries) GetMessagesByThreadPaginated(ctx context.Context, arg GetMessagesByThreadPaginatedParams) ([]Message, error) {
+	rows, err := q.db.Query(ctx, getMessagesByThreadPaginated, arg.ThreadID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Message{}
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(
+			&i.ID,
+			&i.ThreadID,
+			&i.Sender,
+			&i.Content,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTotalMessageCountByThread = `-- name: GetTotalMessageCountByThread :one
+SELECT COUNT(*) FROM message 
+WHERE thread_id = $1
+`
+
+func (q *Queries) GetTotalMessageCountByThread(ctx context.Context, threadID string) (int64, error) {
+	row := q.db.QueryRow(ctx, getTotalMessageCountByThread, threadID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const updateMesageByID = `-- name: UpdateMesageByID :one

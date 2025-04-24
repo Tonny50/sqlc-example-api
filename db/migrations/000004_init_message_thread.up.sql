@@ -1,7 +1,7 @@
 CREATE TABLE "thread" (
   "id" VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::varchar(36),
   "topic" VARCHAR(100) NOT NULL,
-  "meassage" VARCHAR(1000),
+  "message" VARCHAR(1000),
   "created_at" TIMESTAMP DEFAULT now(),
   "updated_at" TIMESTAMP DEFAULT now()
 );

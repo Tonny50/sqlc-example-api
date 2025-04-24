@@ -26,3 +26,13 @@ RETURNING *;
 -- name: DeleteMeageByID :exec
 DELETE FROM message
 WHERE id = $1;
+
+-- name: GetMessagesByThreadPaginated :many
+SELECT * FROM message
+WHERE thread_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: GetTotalMessageCountByThread :one
+SELECT COUNT(*) FROM message 
+WHERE thread_id = $1;

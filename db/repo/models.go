@@ -19,6 +19,7 @@ type Message struct {
 type Thread struct {
 	ID        string           `json:"id"`
 	Topic     string           `json:"topic"`
+	Message   *string          `json:"message"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
