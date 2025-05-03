@@ -30,10 +30,22 @@ func Status(apikey string, reference string) PaymentStatus {
 		log.Fatal(err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("failed to close response body: %v", err)
+		}
+	}()
 
 	var state PaymentStatus
-	json.NewDecoder(resp.Body).Decode(&state)
+	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
+		log.Printf("failed to decode response: %v", err)
+
+	}
 	return state
+	// defer resp.Body.Close()
+
+	// var state PaymentStatus
+	// json.NewDecoder(resp.Body).Decode(&state)
+	// return state
 
 }

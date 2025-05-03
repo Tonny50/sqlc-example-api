@@ -52,9 +52,21 @@ func Payment(apikey string, number string, amount string, description string, ex
 		log.Fatal(err)
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Printf("failed to close response body: %v", err)
+		}
+	}()
 
 	var makepay PaymentResponse
-	json.NewDecoder(response.Body).Decode(&makepay)
+	if err := json.NewDecoder(response.Body).Decode(&makepay); err != nil {
+		log.Printf("failed to decode response: %v", err)
+	}
+
 	return makepay
+	// defer response.Body.Close()
+
+	// var makepay PaymentResponse
+	// json.NewDecoder(response.Body).Decode(&makepay)
+	// return makepay
 }
