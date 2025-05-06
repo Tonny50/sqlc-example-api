@@ -27,6 +27,7 @@ func Migrate(dbURL string, migrationsPath string) error {
 		return err
 	}
 	defer func() {
+		// nolint:errcheck
 		sourceErr, databaseErr := m.Close()
 		if sourceErr != nil {
 			log.Printf("source close error: %v", sourceErr)
@@ -61,6 +62,7 @@ func MigrateDown(dbURL string, migrationsPath string) error {
 		return err
 	}
 	defer func() {
+		// nolint:errcheck
 		sourceErr, databaseErr := m.Close()
 		if sourceErr != nil {
 			log.Printf("source close error: %v", sourceErr)
