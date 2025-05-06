@@ -12,10 +12,6 @@ type MessageHandler struct {
 	querier repo.Querier
 }
 
-// type threadRequest struct {
-// 	topic string `json:"topic"`
-// }
-
 func NewMessageHandler(querier repo.Querier) *MessageHandler {
 	return &MessageHandler{
 		querier: querier,
