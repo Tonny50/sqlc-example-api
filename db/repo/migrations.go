@@ -26,7 +26,15 @@ func Migrate(dbURL string, migrationsPath string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
+	defer func() {
+		sourceErr, databaseErr := m.Close()
+		if sourceErr != nil {
+			log.Printf("source close error: %v", sourceErr)
+		}
+		if databaseErr != nil {
+			log.Printf("database close error: %v", databaseErr)
+		}
+	}()
 
 	// Apply migrations
 	err = m.Up()
